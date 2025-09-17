@@ -16,8 +16,8 @@ class Database {
                 $this->password
             );
             $this->conn->exec("set names utf8");
-
-            echo "Koneksi database berhasil!<br>";
+            
+        
 
         } catch(PDOException $exception) {
             echo "Koneksi gagal: " . $exception->getMessage() . "<br>";

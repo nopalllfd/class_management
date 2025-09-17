@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teachers</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .navlink {
+            list-style: none;
+            display: flex;
+            gap: 1rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navlink a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem;
+        }
+
+        .navlink a.active {
+            background-color: #555;
+            border-radius: 5px;
+        }
+
+        .hero {
+            background: #007BFF;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+
+        pre {
+            background-color: #f8f8f8;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 100px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            background: #333;
+            color: white;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">Dashboard</div>
+        <ul class="navlink">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="classes.html">Classes</a></li>
+            <li><a href="teacher.html" class="active">Teachers</a></li>
+            <li><a href="student.html">Students</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-text">
+            <h1>Teachers Management</h1>
+            <p>Manage teacher data</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="card" style="flex:1; min-width:280px;">
+            <h3>Add Teacher</h3>
+            <form id="teacherForm">
+                <div style="margin-bottom:10px;">
+                    <label for="name">Name:</label><br>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label for="email">Email:</label><br>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <button type="submit" class="btn">Save Teacher</button>
+            </form>
+        </div>
+
+        <div class="card" style="flex:2; min-width:280px;">
+            <h3>Teachers Data (JSON)</h3>
+            <pre id="rawOutput">Loading...</pre>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 Class Management System</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const apiRead = "http://localhost/class_management/backend/api/teachers/read.php";
+            const apiCreate = "http://localhost/class_management/backend/api/teachers/create.php";
+
+            const rawOutput = document.querySelector("#rawOutput");
+            const form = document.querySelector("#teacherForm");
+
+            // Pastikan elements ada
+            if (!rawOutput || !form) {
+                console.error("Required elements not found!");
+                return;
+            }
+
+            function loadTeachers() {
+                rawOutput.textContent = "Mengambil data...";
+
+                fetch(apiRead)
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        if (data.records && data.records.length > 0) {
+                            // Tampilkan data dalam format JSON rapi
+                            rawOutput.textContent = JSON.stringify(data.records, null, 2);
+                        } else {
+                            // Handle response untuk data kosong atau error message dari server
+                            rawOutput.textContent = data.message || "Belum ada data guru.";
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching teachers:", err);
+                        rawOutput.textContent = `Gagal mengambil data guru: ${err.message}`;
+                    });
+            }
+
+            // Event listener untuk form tambah guru
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                const name = document.querySelector("#name").value.trim();
+                const email = document.querySelector("#email").value.trim();
+
+                if (!name || !email) {
+                    alert("Nama dan email wajib diisi!");
+                    return;
+                }
+
+                const teacherData = { name, email };
+
+                fetch(apiCreate, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(teacherData),
+                })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        alert(data.message || "Guru berhasil ditambahkan!");
+                        form.reset();
+                        loadTeachers(); // Reload data setelah menambah
+                    })
+                    .catch(err => {
+                        console.error("Error creating teacher:", err);
+                        alert(`Gagal menambahkan guru: ${err.message}`);
+                    });
+            });
+
+            // Load data saat pertama kali halaman dibuka
+            loadTeachers();
+        });
+    </script>
+</body>
+
+</html>

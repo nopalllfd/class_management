@@ -8,7 +8,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 
 
 include_once '../../config/database.php';
-include_once '../../core/ClassModel.php'; 
+include_once '../../core/class.php'; 
 $database = new Database();
 $db = $database->getConnection();
 $classModel = new Classes($db); 

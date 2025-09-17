@@ -1,14 +1,20 @@
 <?php
-// Set header untuk mengizinkan permintaan CORS dan output JSON
+// --- CORS Headers ---
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
+// Jika preflight OPTIONS, langsung berhenti di sini
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 // Mengimpor file konfigurasi dan model
 include_once '../../config/database.php';
-include_once '../../core/Teacher.php';
+include_once '../../core/teacher.php';
 
 // Inisialisasi objek database dan teacher
 $database = new Database();

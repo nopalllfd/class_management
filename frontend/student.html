@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .navlink {
+            list-style: none;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .navlink a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem;
+        }
+
+        .navlink a.active {
+            background-color: #555;
+            border-radius: 5px;
+        }
+
+        .hero {
+            background: #007BFF;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+
+        pre {
+            background-color: #f8f8f8;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            background: #333;
+            color: white;
+            margin-top: 2rem;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Dashboard</div>
+        <ul class="navlink">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="classes.html">Classes</a></li>
+            <li><a href="teacher.html">Teachers</a></li>
+            <li><a href="student.html" class="active">Students</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-text">
+            <h1>Students</h1>
+            <p>Manage student data</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="card" style="flex:1; min-width:280px;">
+            <h3>Add Student</h3>
+            <form id="studentForm">
+                <div style="margin-bottom:10px;">
+                    <label for="name">Name:</label><br>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label for="email">Email:</label><br>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label for="class_id">Choose Class:</label><br>
+                    <select id="class_id" name="class_id" required>
+                        <option value="">-- Select Class --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Save</button>
+            </form>
+        </div>
+
+        <div class="card" style="flex:2; min-width:280px;">
+            <h3>Raw JSON Data</h3>
+            <pre id="rawOutput">Loading...</pre>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Class Management</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const apiRead = "http://localhost/class_management/backend/api/students/read.php";
+            const apiCreate = "http://localhost/class_management/backend/api/students/create.php";
+            const apiClasses = "http://localhost/class_management/backend/api/class/read.php";
+
+            const rawOutput = document.querySelector("#rawOutput");
+            const form = document.querySelector("#studentForm");
+            const classSelect = document.querySelector("#class_id");
+
+            function loadClasses() {
+                fetch(apiClasses)
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        console.log("Classes data received:", data);
+                        
+                        // Clear existing options except the first one
+                        classSelect.innerHTML = '<option value="">-- Select Class --</option>';
+                        
+                        if (data.records && data.records.length > 0) {
+                            data.records.forEach(classItem => {
+                                const option = document.createElement('option');
+                                option.value = classItem.id;
+                                option.textContent = classItem.name || `Class ${classItem.id}`;
+                                classSelect.appendChild(option);
+                            });
+                        } else {
+                            const option = document.createElement('option');
+                            option.value = "";
+                            option.textContent = "No classes available";
+                            option.disabled = true;
+                            classSelect.appendChild(option);
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching classes:", err);
+                        const option = document.createElement('option');
+                        option.value = "";
+                        option.textContent = "Error loading classes";
+                        option.disabled = true;
+                        classSelect.appendChild(option);
+                    });
+            }
+
+            function loadStudents() {
+                rawOutput.textContent = "Mengambil data...";
+                fetch(apiRead)
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        console.log("Data received:", data);
+
+                        if (data.records && data.records.length > 0) {
+                            rawOutput.textContent = JSON.stringify(data.records, null, 2);
+                        } else {
+                            rawOutput.textContent = "Belum ada data siswa.";
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching students:", err);
+                        rawOutput.textContent = `Gagal mengambil data siswa: ${err.message}`;
+                    });
+            }
+
+            // Add new student
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const name = document.querySelector("#name").value.trim();
+                const email = document.querySelector("#email").value.trim();
+                const class_id = document.querySelector("#class_id").value.trim();
+
+                if (!name || !email || !class_id) {
+                    alert("Nama, email, dan Kelas wajib diisi!");
+                    return;
+                }
+
+                fetch(apiCreate, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, class_id }),
+                })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        alert(data.message || "Siswa berhasil ditambahkan!");
+                        form.reset();
+                        loadStudents();
+                    })
+                    .catch(err => {
+                        console.error("Error creating student:", err);
+                        alert(`Gagal menambahkan siswa: ${err.message}`);
+                    });
+            });
+
+            // Load data on page load
+            loadClasses();
+            loadStudents();
+        });
+    </script>
+</body>
+
+</html>
