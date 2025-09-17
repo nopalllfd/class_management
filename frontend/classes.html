@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classes</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .navlink {
+            list-style: none;
+            display: flex;
+            gap: 1rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navlink a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem;
+        }
+
+        .navlink a.active {
+            background-color: #555;
+            border-radius: 5px;
+        }
+
+        .hero {
+            background: #007BFF;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+
+        pre {
+            background-color: #f8f8f8;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 100px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            background: #333;
+            color: white;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">Dashboard</div>
+        <ul class="navlink">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="classes.html" class="active">Classes</a></li>
+            <li><a href="teacher.html">Teachers</a></li>
+            <li><a href="student.html">Students</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-text">
+            <h1>Classes Management</h1>
+            <p>Manage class data</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="card" style="flex:1; min-width:280px;">
+            <h3>Add Class</h3>
+            <form id="classForm">
+                <div style="margin-bottom:10px;">
+                    <label for="name">Class Name:</label><br>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label for="teacher_id">Choose Teacher:</label><br>
+                    <select id="teacher_id" name="teacher_id" required>
+                        <option value="">-- Select Teacher --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Save Class</button>
+            </form>
+        </div>
+
+        <div class="card" style="flex:2; min-width:280px;">
+            <h3>Classes Data (JSON)</h3>
+            <pre id="rawOutput">Loading...</pre>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 Class Management System</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const apiReadClasses = "http://localhost/class_management/backend/api/class/read.php";
+            const apiCreateClass = "http://localhost/class_management/backend/api/class/create.php";
+            const apiReadTeachers = "http://localhost/class_management/backend/api/teachers/read.php";
+
+            const form = document.querySelector("#classForm");
+            const rawOutput = document.querySelector("#rawOutput");
+            const teacherSelect = document.querySelector("#teacher_id");
+
+            // Pastikan elements ada
+            if (!form || !rawOutput || !teacherSelect) {
+                console.error("Required elements not found!");
+                return;
+            }
+
+            // Load teachers untuk dropdown
+            function loadTeachers() {
+                fetch(apiReadTeachers)
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        teacherSelect.innerHTML = '<option value="">-- Select Teacher --</option>';
+
+                        if (data.records && data.records.length > 0) {
+                            data.records.forEach(teacher => {
+                                const option = document.createElement('option');
+                                option.value = teacher.id;
+                                option.textContent = teacher.name;
+                                teacherSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error loading teachers:", err);
+                        teacherSelect.innerHTML = '<option value="">Error loading teachers</option>';
+                    });
+            }
+
+            // Load classes data
+            function loadClasses() {
+                rawOutput.textContent = "Mengambil data...";
+
+                fetch(apiReadClasses)
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.records && data.records.length > 0) {
+                            // Tampilkan data dalam format JSON rapi
+                            rawOutput.textContent = JSON.stringify(data.records, null, 2);
+                        } else {
+                            // Handle response untuk data kosong atau error message dari server
+                            rawOutput.textContent = data.message || "Belum ada data kelas.";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error fetching classes:", err);
+                        rawOutput.textContent = `Gagal mengambil data kelas: ${err.message}`;
+                    });
+            }
+
+            // Event listener untuk form tambah kelas
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                const name = document.querySelector("#name").value.trim();
+                const teacher_id = document.querySelector("#teacher_id").value;
+
+                if (!name || !teacher_id) {
+                    alert("Nama kelas dan guru wajib diisi!");
+                    return;
+                }
+
+                const classData = { name, teacher_id };
+
+                fetch(apiCreateClass, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(classData),
+                })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        alert(data.message || "Kelas berhasil ditambahkan!");
+                        form.reset();
+                        loadClasses(); // Reload data setelah menambah
+                    })
+                    .catch(err => {
+                        console.error("Error creating class:", err);
+                        alert(`Gagal menambahkan kelas: ${err.message}`);
+                    });
+            });
+
+            // Load data pertama kali
+            loadTeachers();
+            loadClasses();
+        });
+    </script>
+</body>
+
+</html>

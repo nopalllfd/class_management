@@ -1,4 +1,14 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+// kalau method OPTIONS, langsung keluar (biar preflight sukses)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 // Set header
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -25,7 +35,8 @@ if ($num > 0) {
         $teacher_item = array(
             "id" => $id,
             "name" => $name,
-            "email" => $email
+            "email" => $email,
+            "created_at" => $created_at,
         );
         array_push($teachers_arr["records"], $teacher_item);
     }
